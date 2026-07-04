@@ -12,6 +12,8 @@ import {
   GUEST_NAMES, GUEST_EMOJIS, DISHES 
 } from './data';
 
+import { playSound, startMusic, stopMusic } from './lib/audio';
+
 import LandscapeOnly from './components/LandscapeOnly';
 import LoadingScreen from './components/LoadingScreen';
 import MainMenu from './components/MainMenu';
@@ -43,11 +45,25 @@ export default function App() {
   const [guests, setGuests] = useState<Guest[]>([]);
   const [rooms, setRooms] = useState<Room[]>([
     { number: 301, floor: 3, status: 'vacant', guestId: null, cleanProgress: 0, bedLevel: 1, tvLevel: 1, lampLevel: 1 },
-    { number: 302, floor: 3, status: 'vacant', guestId: null, cleanProgress: 0, bedLevel: 1, tvLevel: 1, lampLevel: 1 }
+    { number: 302, floor: 3, status: 'vacant', guestId: null, cleanProgress: 0, bedLevel: 1, tvLevel: 1, lampLevel: 1 },
+    { number: 303, floor: 3, status: 'vacant', guestId: null, cleanProgress: 0, bedLevel: 1, tvLevel: 1, lampLevel: 1, locked: true, unlockCost: 450 },
+    { number: 304, floor: 3, status: 'vacant', guestId: null, cleanProgress: 0, bedLevel: 1, tvLevel: 1, lampLevel: 1, locked: true, unlockCost: 900 }
   ]);
   const [staff, setStaff] = useState<Staff[]>(INITIAL_STAFF);
   const [upgrades, setUpgrades] = useState<Upgrade[]>(INITIAL_UPGRADES);
   const [reviews, setReviews] = useState<Review[]>(INITIAL_REVIEWS);
+
+  // ==================== AUDIO MUSIC PERSISTENCE ====================
+  useEffect(() => {
+    if (musicOn && screen !== 'loading' && screen !== 'menu') {
+      startMusic();
+    } else {
+      stopMusic();
+    }
+    return () => {
+      stopMusic();
+    };
+  }, [musicOn, screen]);
 
   // ==================== LOCALSTORAGE PERSISTENCE ====================
   useEffect(() => {
@@ -59,6 +75,7 @@ export default function App() {
       const savedStaff = localStorage.getItem('sh_staff');
       const savedUpgrades = localStorage.getItem('sh_upgrades');
       const savedReviews = localStorage.getItem('sh_reviews');
+      const savedRooms = localStorage.getItem('sh_rooms');
 
       if (savedMoney) setMoney(Number(savedMoney));
       if (savedLvl) setLevel(Number(savedLvl));
@@ -77,6 +94,10 @@ export default function App() {
         const parsed = JSON.parse(savedReviews);
         if (parsed && parsed.length > 0) setReviews(parsed);
       }
+      if (savedRooms) {
+        const parsed = JSON.parse(savedRooms);
+        if (parsed && parsed.length > 0) setRooms(parsed);
+      }
     } catch (e) {
       console.error("Local storage restoration failed:", e);
     }
@@ -84,7 +105,8 @@ export default function App() {
 
   const saveProgressToLocal = (
     currentMoney: number, currentLvl: number, currentXp: number, 
-    currentRating: number, currentStaff: Staff[], currentUpgrades: Upgrade[], currentReviews: Review[]
+    currentRating: number, currentStaff: Staff[], currentUpgrades: Upgrade[], currentReviews: Review[],
+    currentRooms?: Room[]
   ) => {
     try {
       localStorage.setItem('sh_money', currentMoney.toString());
@@ -94,6 +116,11 @@ export default function App() {
       localStorage.setItem('sh_staff', JSON.stringify(currentStaff));
       localStorage.setItem('sh_upgrades', JSON.stringify(currentUpgrades));
       localStorage.setItem('sh_reviews', JSON.stringify(currentReviews));
+      if (currentRooms) {
+        localStorage.setItem('sh_rooms', JSON.stringify(currentRooms));
+      } else {
+        localStorage.setItem('sh_rooms', JSON.stringify(rooms));
+      }
     } catch (e) {
       console.error("Local storage write failed:", e);
     }
@@ -111,8 +138,31 @@ export default function App() {
     setGuests([]);
     setRooms([
       { number: 301, floor: 3, status: 'vacant', guestId: null, cleanProgress: 0, bedLevel: 1, tvLevel: 1, lampLevel: 1 },
-      { number: 302, floor: 3, status: 'vacant', guestId: null, cleanProgress: 0, bedLevel: 1, tvLevel: 1, lampLevel: 1 }
+      { number: 302, floor: 3, status: 'vacant', guestId: null, cleanProgress: 0, bedLevel: 1, tvLevel: 1, lampLevel: 1 },
+      { number: 303, floor: 3, status: 'vacant', guestId: null, cleanProgress: 0, bedLevel: 1, tvLevel: 1, lampLevel: 1, locked: true, unlockCost: 450 },
+      { number: 304, floor: 3, status: 'vacant', guestId: null, cleanProgress: 0, bedLevel: 1, tvLevel: 1, lampLevel: 1, locked: true, unlockCost: 900 }
     ]);
+    playSound('fail');
+  };
+
+  const handleUnlockRoom = (roomNumber: number) => {
+    const room = rooms.find((r) => r.number === roomNumber);
+    if (!room || !room.locked || !room.unlockCost) return;
+    if (money < room.unlockCost) {
+      playSound('fail');
+      return;
+    }
+    const nextMoney = money - room.unlockCost;
+    const updatedRooms = rooms.map((r) => {
+      if (r.number === roomNumber) {
+        return { ...r, locked: false };
+      }
+      return r;
+    });
+    setMoney(nextMoney);
+    setRooms(updatedRooms);
+    playSound('powerup');
+    saveProgressToLocal(nextMoney, level, xp, rating, staff, upgrades, reviews, updatedRooms);
   };
 
   // ==================== GAME TIMER LOOP ====================
@@ -308,6 +358,7 @@ export default function App() {
 
   // Check in guest
   const onAssignRoom = (guestId: string, roomNumber: number) => {
+    playSound('click');
     setGuests((prev) => 
       prev.map((g) => {
         if (g.id === guestId) {
@@ -353,11 +404,15 @@ export default function App() {
 
   // Clean filthy room sheets
   const onCleanRoom = (roomNumber: number) => {
+    playSound('sweep');
     setRooms((prev) => 
       prev.map((r) => {
         if (r.number === roomNumber) {
           // Increment clean progress
           const nextProgress = Math.min(100, r.cleanProgress + 25);
+          if (nextProgress === 100) {
+            playSound('powerup');
+          }
           return {
             ...r,
             cleanProgress: nextProgress,
@@ -388,6 +443,9 @@ export default function App() {
     if (finalXp >= needed) {
       finalLvl += 1;
       finalXp = finalXp - needed;
+      playSound('chime');
+    } else {
+      playSound('coin');
     }
 
     setMoney(finalMoney);
@@ -439,6 +497,7 @@ export default function App() {
 
   // Select food request from bubble
   const onSelectGuestOrder = (guest: Guest) => {
+    playSound('click');
     setActiveOrderGuest(guest);
     setScreen('cooking');
   };
@@ -452,6 +511,9 @@ export default function App() {
     if (finalXp >= xpNeeded) {
       finalLvl += 1;
       finalXp = finalXp - xpNeeded;
+      playSound('chime');
+    } else {
+      playSound('coin');
     }
 
     const finalMoney = money + earnings;
@@ -467,8 +529,9 @@ export default function App() {
           return {
             ...g,
             status: 'waiting_delivery',
+            payout: earnings, // keep track of tips
             patience: 100
-          };
+          } as any;
         }
         return g;
       })
@@ -489,6 +552,7 @@ export default function App() {
 
   // Dispatch meal delivery
   const onDeliverFood = (guestId: string) => {
+    playSound('ding');
     const guest = guests.find((g) => g.id === guestId);
     if (!guest) return;
 
@@ -505,16 +569,12 @@ export default function App() {
         return g;
       })
     );
-
-    // After 8 seconds of eating, guest sleeps, and checked-out rent becomes redeemable
-    setTimeout(() => {
-      // Checked out triggers
-    }, 8000);
   };
 
   // Call magnetic elevator floor
   const onCallElevator = (floor: number) => {
     if (elevatorStatus === 'broken') return;
+    playSound('click');
 
     // Golden elevator speed multiplier check
     const elevatorUpgradeLvl = upgrades.find(u => u.id === 'elevator')?.level || 1;
@@ -522,15 +582,18 @@ export default function App() {
 
     setTimeout(() => {
       setElevatorFloor(floor);
+      playSound('ding');
     }, delay);
   };
 
   // Tapping rapid repairs
   const onRepairElevator = () => {
+    playSound('click');
     setElevatorTaps((prev) => {
       const next = prev + 1;
       if (next >= 5) {
         setElevatorStatus('working');
+        playSound('powerup');
         setElevatorTaps(0);
         return 0;
       }
@@ -541,7 +604,10 @@ export default function App() {
   // Buy suite upgrades
   const onBuyUpgrade = (upgradeId: string) => {
     const upgrade = upgrades.find((u) => u.id === upgradeId);
-    if (!upgrade || money < upgrade.cost) return;
+    if (!upgrade || money < upgrade.cost) {
+      playSound('fail');
+      return;
+    }
 
     const nextMoney = money - upgrade.cost;
     const nextCost = Math.floor(upgrade.cost * upgrade.multiplier);
@@ -567,13 +633,17 @@ export default function App() {
 
     setMoney(nextMoney);
     setUpgrades(nextUpgrades);
+    playSound('powerup');
     saveProgressToLocal(nextMoney, level, xp, rating, staff, nextUpgrades, reviews);
   };
 
   // Sign employee contract
   const onHireStaff = (staffId: string) => {
     const employee = staff.find((s) => s.id === staffId);
-    if (!employee || money < employee.cost) return;
+    if (!employee || money < employee.cost) {
+      playSound('fail');
+      return;
+    }
 
     const nextMoney = money - employee.cost;
     const nextStaff = staff.map((s) => {
@@ -585,6 +655,7 @@ export default function App() {
 
     setMoney(nextMoney);
     setStaff(nextStaff);
+    playSound('powerup');
     saveProgressToLocal(nextMoney, level, xp, rating, nextStaff, upgrades, reviews);
   };
 
@@ -594,7 +665,10 @@ export default function App() {
     if (!employee) return;
 
     const levelUpCost = Math.floor(employee.cost * 0.7);
-    if (money < levelUpCost) return;
+    if (money < levelUpCost) {
+      playSound('fail');
+      return;
+    }
 
     const nextMoney = money - levelUpCost;
     const nextStaff = staff.map((s) => {
@@ -610,6 +684,7 @@ export default function App() {
 
     setMoney(nextMoney);
     setStaff(nextStaff);
+    playSound('powerup');
     saveProgressToLocal(nextMoney, level, xp, rating, nextStaff, upgrades, reviews);
   };
 
@@ -651,6 +726,7 @@ export default function App() {
             onRepairElevator={onRepairElevator}
             onSelectGuestOrder={onSelectGuestOrder}
             onCallElevator={onCallElevator}
+            onUnlockRoom={handleUnlockRoom}
           />
         )}
 

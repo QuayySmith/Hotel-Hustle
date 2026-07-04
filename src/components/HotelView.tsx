@@ -7,7 +7,7 @@ import React, { useState, useEffect } from 'react';
 import { 
   DollarSign, Star, Users, ArrowUpRight, ShieldAlert,
   Wrench, Sparkles, ChefHat, ShoppingBag, MessageSquare, 
-  Trash2, HelpCircle, User, LogOut, ArrowUp, ArrowDown
+  Trash2, HelpCircle, User, LogOut, ArrowUp, ArrowDown, Lock
 } from 'lucide-react';
 import { Guest, Room, Staff, ScreenType, DishId } from '../types';
 import { DISHES, GUEST_NAMES, GUEST_EMOJIS } from '../data';
@@ -30,6 +30,7 @@ interface HotelViewProps {
   onRepairElevator: () => void;
   onSelectGuestOrder: (guest: Guest) => void;
   onCallElevator: (floor: number) => void;
+  onUnlockRoom: (roomNumber: number) => void;
 }
 
 export default function HotelView({
@@ -50,6 +51,7 @@ export default function HotelView({
   onRepairElevator,
   onSelectGuestOrder,
   onCallElevator,
+  onUnlockRoom,
 }: HotelViewProps) {
   const [selectedLobbyGuest, setSelectedLobbyGuest] = useState<Guest | null>(null);
   const [carOffset, setCarOffset] = useState<number[]>( [0, -150, -300] );
@@ -267,240 +269,154 @@ export default function HotelView({
                   3F: VIP PENTHOUSE SUITES
                 </div>
 
-                {/* Suite 301 */}
-                <div className="col-span-5 border-r-2 border-slate-950 relative p-4 flex flex-col justify-between overflow-hidden">
-                  {/* Backdrop Wall pattern */}
-                  <div className="absolute inset-0 bg-gradient-to-b from-indigo-950/10 via-slate-900 to-indigo-950/20 opacity-90"></div>
-                  
-                  {/* Room Equipment Icons & status info */}
-                  {(() => {
-                    const room = rooms.find((r) => r.number === 301);
-                    const guest = guests.find((g) => g.roomNumber === 301);
+                {/* 3F: VIP Suites Container (Dynamic 2-4 Rooms) */}
+                <div className="col-span-10 flex flex-row divide-x-2 divide-slate-950 h-full relative">
+                  {rooms.map((room) => {
+                    const guest = guests.find((g) => g.roomNumber === room.number);
                     
-                    return (
-                      <div className="relative z-10 flex flex-col h-full justify-between">
-                        {/* Header */}
-                        <div className="flex justify-between items-center">
-                          <span className="font-mono text-xs font-black text-slate-400 tracking-wider">ROOM 301</span>
-                          {/* Room state badge */}
-                          {room?.status === 'vacant' && (
-                            <span className="px-2 py-0.5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-md font-bold text-[9px]">VACANT</span>
-                          )}
-                          {room?.status === 'occupied' && (
-                            <span className="px-2 py-0.5 bg-pink-500/10 border border-pink-500/20 text-pink-400 rounded-md font-bold text-[9px]">OCCUPIED</span>
-                          )}
-                          {room?.status === 'dirty' && (
-                            <span className="px-2 py-0.5 bg-rose-500/10 border border-rose-500/20 text-rose-400 rounded-md font-bold text-[9px] animate-pulse">DIRTY</span>
-                          )}
-                          {room?.status === 'cleaning' && (
-                            <div className="flex items-center gap-1.5">
-                              <span className="text-[9px] font-bold text-cyan-400 animate-pulse">CLEANING...</span>
-                              <div className="w-10 h-1.5 bg-slate-950 rounded-full overflow-hidden border border-slate-800">
-                                <div className="h-full bg-cyan-400 transition-all duration-300" style={{ width: `${room.cleanProgress}%` }}></div>
-                              </div>
-                            </div>
-                          )}
-                        </div>
-
-                        {/* Room Visual Elements: bed, TV, light lamps */}
-                        <div className="flex items-end justify-between mt-auto mb-1">
+                    if (room.locked) {
+                      return (
+                        <div key={room.number} className="flex-1 h-full relative p-2 md:p-4 flex flex-col items-center justify-center bg-slate-950/95 overflow-hidden">
+                          {/* Locked Overlay Backdrop */}
+                          <div className="absolute inset-0 bg-gradient-to-br from-indigo-950/20 via-slate-950 to-purple-950/10 opacity-75"></div>
                           
-                          {/* Bed / Guest Sleep */}
-                          <div className="relative flex flex-col items-center group">
-                            {guest && (
-                              <div className="absolute -top-12 left-1/2 -translate-x-1/2 z-10 flex flex-col items-center">
-                                {/* Guest bubble order */}
-                                {guest.status === 'ordering' && (
-                                  <div 
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      onSelectGuestOrder(guest);
-                                    }}
-                                    className="animate-bounce-subtle bg-white border-2 border-pink-500 text-slate-900 font-bold px-2 py-1 rounded-2xl flex items-center gap-1 text-[11px] shadow-lg cursor-pointer"
-                                  >
-                                    <span className="text-sm shrink-0">{DISHES[guest.orderDishId || 'burger'].icon}</span>
-                                    <span>ORDER</span>
-                                  </div>
-                                )}
+                          <div className="relative z-10 flex flex-col items-center text-center p-1">
+                            <span className="font-mono text-[8px] md:text-[10px] font-black text-slate-500 tracking-wider mb-0.5">SUITE {room.number}</span>
+                            <div className="w-8 h-8 rounded-full bg-slate-900 border border-slate-800 flex items-center justify-center shadow-inner mb-1.5">
+                              <Lock className="w-3.5 h-3.5 text-slate-500" />
+                            </div>
+                            <span className="text-[8px] font-bold text-slate-400 mb-1.5">LOCKED</span>
+                            
+                            <button
+                              onClick={() => onUnlockRoom(room.number)}
+                              disabled={money < (room.unlockCost || 9999)}
+                              className={`px-2 py-1 rounded-lg text-[8px] font-black tracking-wider shadow-md transition-all flex items-center gap-0.5 cursor-pointer ${
+                                money >= (room.unlockCost || 9999)
+                                  ? 'bg-gradient-to-r from-amber-500 to-yellow-500 hover:scale-105 text-slate-950 shadow-[0_0_12px_rgba(234,179,8,0.4)] font-extrabold'
+                                  : 'bg-slate-900 text-slate-600 border border-slate-850 cursor-not-allowed'
+                              }`}
+                            >
+                              <DollarSign className="w-2.5 h-2.5" />
+                              BUY FOR ${room.unlockCost}
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    }
 
-                                {guest.status === 'waiting_delivery' && (
-                                  <div className="animate-pulse bg-gradient-to-r from-yellow-400 to-orange-500 text-slate-900 font-extrabold px-2.5 py-1 rounded-2xl flex items-center gap-1 text-[10px] shadow-lg">
-                                    <span>🛎️ SERVE</span>
-                                  </div>
-                                )}
-
-                                {guest.status === 'eating' && (
-                                  <div className="bg-slate-900 border border-slate-700 font-bold px-2.5 py-1 rounded-full text-[10px] text-slate-300">
-                                    😋 Eating...
-                                  </div>
-                                )}
-
-                                {/* Floating Guest Character Emoji */}
-                                <div className="text-3xl mt-1.5 animate-bounce-subtle">
-                                  {guest.avatarEmoji}
+                    return (
+                      <div key={room.number} className="flex-1 h-full min-w-0 relative p-2 flex flex-col justify-between overflow-hidden">
+                        {/* Backdrop Wall pattern */}
+                        <div className="absolute inset-0 bg-gradient-to-b from-indigo-950/10 via-slate-900 to-indigo-950/20 opacity-90"></div>
+                        
+                        <div className="relative z-10 flex flex-col h-full justify-between">
+                          {/* Header */}
+                          <div className="flex justify-between items-center">
+                            <span className="font-mono text-[9px] md:text-[10px] font-black text-slate-400 tracking-wider">ROOM {room.number}</span>
+                            {/* Room state badge */}
+                            {room.status === 'vacant' && (
+                              <span className="px-1.5 py-0.5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-md font-bold text-[8px]">VACANT</span>
+                            )}
+                            {room.status === 'occupied' && (
+                              <span className="px-1.5 py-0.5 bg-pink-500/10 border border-pink-500/20 text-pink-400 rounded-md font-bold text-[8px]">OCCUPIED</span>
+                            )}
+                            {room.status === 'dirty' && (
+                              <span className="px-1.5 py-0.5 bg-rose-500/10 border border-rose-500/20 text-rose-400 rounded-md font-bold text-[8px] animate-pulse">DIRTY</span>
+                            )}
+                            {room.status === 'cleaning' && (
+                              <div className="flex items-center gap-1">
+                                <span className="text-[8px] font-bold text-cyan-400 animate-pulse">CLEAN...</span>
+                                <div className="w-8 h-1 bg-slate-950 rounded-full overflow-hidden border border-slate-800">
+                                  <div className="h-full bg-cyan-400 transition-all duration-300" style={{ width: `${room.cleanProgress}%` }}></div>
                                 </div>
                               </div>
                             )}
-
-                            {/* Bed graphic */}
-                            <div className="w-24 h-12 bg-indigo-950 border-2 border-indigo-900 rounded-xl relative overflow-hidden flex items-end p-1">
-                              <div className="absolute top-0 right-0 w-8 h-full bg-indigo-900/50"></div> {/* Pillow */}
-                              <div className="absolute top-2 left-2 w-14 h-4 bg-purple-900/40 rounded-full"></div>
-                              <span className="text-[10px] font-mono text-indigo-300/40 absolute top-1 left-2 font-bold">LVL {room?.bedLevel}</span>
-                            </div>
                           </div>
 
-                          {/* Interactive Checkout Rent or Cleaning actions */}
-                          <div className="flex flex-col gap-1.5 items-center">
-                            {room?.status === 'dirty' && (
-                              <button
-                                onClick={() => onCleanRoom(301)}
-                                className="flex items-center gap-1.5 px-3 py-1.5 bg-rose-500 hover:bg-rose-400 text-white rounded-xl text-xs font-black shadow-[0_0_10px_rgba(239,68,68,0.4)] cursor-pointer"
-                              >
-                                <Trash2 className="w-3.5 h-3.5" />
-                                CLEAN
-                              </button>
-                            )}
+                          {/* Room Visual Elements: bed, TV, light lamps */}
+                          <div className="flex items-end justify-between mt-auto mb-1 gap-1">
+                            {/* Bed / Guest Sleep */}
+                            <div className="relative flex flex-col items-center group">
+                              {guest && (
+                                <div className="absolute -top-12 left-1/2 -translate-x-1/2 z-10 flex flex-col items-center">
+                                  {/* Guest bubble order */}
+                                  {guest.status === 'ordering' && (
+                                    <div 
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        onSelectGuestOrder(guest);
+                                      }}
+                                      className="animate-bounce-subtle bg-white border-2 border-pink-500 text-slate-900 font-bold px-2 py-1 rounded-2xl flex items-center gap-1 text-[9px] shadow-lg cursor-pointer whitespace-nowrap"
+                                    >
+                                      <span className="text-sm shrink-0">{DISHES[guest.orderDishId || 'burger'].icon}</span>
+                                      <span>ORDER</span>
+                                    </div>
+                                  )}
 
-                            {guest && guest.status === 'eating' && (
-                              <button
-                                onClick={() => onCollectRent(guest.id, 301)}
-                                className="flex items-center gap-1 px-3 py-1.5 bg-gradient-to-r from-emerald-500 to-teal-600 hover:scale-105 text-white rounded-xl text-xs font-black shadow-[0_0_15px_rgba(16,185,129,0.3)] animate-pulse-glow cursor-pointer"
-                              >
-                                <DollarSign className="w-3.5 h-3.5" />
-                                CHECKOUT
-                              </button>
-                            )}
-                          </div>
+                                  {guest.status === 'waiting_delivery' && (
+                                    <div className="animate-pulse bg-gradient-to-r from-yellow-400 to-orange-500 text-slate-900 font-extrabold px-2 py-1 rounded-2xl flex items-center gap-1 text-[8px] shadow-lg whitespace-nowrap">
+                                      <span>🛎️ SERVE</span>
+                                    </div>
+                                  )}
 
-                          {/* Flat Screen TV Mounted on Wall */}
-                          <div className="flex flex-col items-center">
-                            <div className="w-14 h-9 bg-slate-950 border border-slate-800 rounded-md relative flex flex-col items-center justify-center overflow-hidden">
-                              <div className="absolute inset-0 bg-cyan-400/5 animate-pulse"></div>
-                              <span className="text-[8px] font-bold text-cyan-400 tracking-wider">HD TV</span>
-                              <span className="text-[7px] font-mono text-slate-600">LVL {room?.tvLevel}</span>
+                                  {guest.status === 'eating' && (
+                                    <div className="bg-slate-900 border border-slate-700 font-bold px-1.5 py-0.5 rounded-full text-[8px] text-slate-300 whitespace-nowrap">
+                                      😋 Eating...
+                                    </div>
+                                  )}
+
+                                  {/* Floating Guest Character Emoji */}
+                                  <div className="text-xl md:text-2xl mt-1 animate-bounce-subtle">
+                                    {guest.avatarEmoji}
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* Bed graphic */}
+                              <div className="w-16 md:w-20 h-8 md:h-10 bg-indigo-950 border border-indigo-900 rounded-lg relative overflow-hidden flex items-end p-0.5">
+                                <div className="absolute top-0 right-0 w-5 md:w-6 h-full bg-indigo-900/50"></div> {/* Pillow */}
+                                <div className="absolute top-2 left-2 w-8 md:w-10 h-3 bg-purple-900/40 rounded-full"></div>
+                                <span className="text-[7px] md:text-[8px] font-mono text-indigo-300/40 absolute top-0.5 left-1 font-bold">LVL {room.bedLevel}</span>
+                              </div>
                             </div>
-                            <div className="w-4 h-2 bg-slate-850 border-r border-l border-slate-700"></div>
+
+                            {/* Interactive Actions (Clean/Rent) */}
+                            <div className="flex flex-col gap-1 items-center">
+                              {room.status === 'dirty' && (
+                                <button
+                                  onClick={() => onCleanRoom(room.number)}
+                                  className="flex items-center gap-1 px-1.5 py-0.5 bg-rose-500 hover:bg-rose-400 text-white rounded-md text-[8px] font-black shadow-[0_0_8px_rgba(239,68,68,0.4)] cursor-pointer"
+                                >
+                                  <Trash2 className="w-2.5 h-2.5" />
+                                  CLEAN
+                                </button>
+                              )}
+
+                              {guest && guest.status === 'eating' && (
+                                <button
+                                  onClick={() => onCollectRent(guest.id, room.number)}
+                                  className="flex items-center gap-0.5 px-1.5 py-0.5 bg-gradient-to-r from-emerald-500 to-teal-600 hover:scale-105 text-white rounded-md text-[8px] font-black shadow-[0_0_12px_rgba(16,185,129,0.3)] animate-pulse-glow cursor-pointer whitespace-nowrap"
+                                >
+                                  <DollarSign className="w-2.5 h-2.5" />
+                                  OUT
+                                </button>
+                              )}
+                            </div>
+
+                            {/* TV Graphic */}
+                            <div className="flex flex-col items-center">
+                              <div className="w-10 md:w-12 h-6 md:h-8 bg-slate-950 border border-slate-800 rounded-md relative flex flex-col items-center justify-center overflow-hidden">
+                                <div className="absolute inset-0 bg-cyan-400/5 animate-pulse"></div>
+                                <span className="text-[6px] md:text-[7px] font-bold text-cyan-400 tracking-wider">HD TV</span>
+                                <span className="text-[5px] md:text-[6px] font-mono text-slate-600">LVL {room.tvLevel}</span>
+                              </div>
+                              <div className="w-3.5 h-1 bg-slate-850 border-r border-l border-slate-700"></div>
+                            </div>
                           </div>
                         </div>
                       </div>
                     );
-                  })()}
-                </div>
-
-                {/* Suite 302 */}
-                <div className="col-span-5 border-r-2 border-slate-950 relative p-4 flex flex-col justify-between overflow-hidden">
-                  <div className="absolute inset-0 bg-gradient-to-b from-indigo-950/10 via-slate-900 to-indigo-950/20 opacity-90"></div>
-                  
-                  {(() => {
-                    const room = rooms.find((r) => r.number === 302);
-                    const guest = guests.find((g) => g.roomNumber === 302);
-                    
-                    return (
-                      <div className="relative z-10 flex flex-col h-full justify-between">
-                        {/* Header */}
-                        <div className="flex justify-between items-center">
-                          <span className="font-mono text-xs font-black text-slate-400 tracking-wider">ROOM 302</span>
-                          {room?.status === 'vacant' && (
-                            <span className="px-2 py-0.5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-md font-bold text-[9px]">VACANT</span>
-                          )}
-                          {room?.status === 'occupied' && (
-                            <span className="px-2 py-0.5 bg-pink-500/10 border border-pink-500/20 text-pink-400 rounded-md font-bold text-[9px]">OCCUPIED</span>
-                          )}
-                          {room?.status === 'dirty' && (
-                            <span className="px-2 py-0.5 bg-rose-500/10 border border-rose-500/20 text-rose-400 rounded-md font-bold text-[9px] animate-pulse">DIRTY</span>
-                          )}
-                          {room?.status === 'cleaning' && (
-                            <div className="flex items-center gap-1.5">
-                              <span className="text-[9px] font-bold text-cyan-400 animate-pulse">CLEANING...</span>
-                              <div className="w-10 h-1.5 bg-slate-950 rounded-full overflow-hidden border border-slate-800">
-                                <div className="h-full bg-cyan-400 transition-all duration-300" style={{ width: `${room.cleanProgress}%` }}></div>
-                              </div>
-                            </div>
-                          )}
-                        </div>
-
-                        {/* Equipment */}
-                        <div className="flex items-end justify-between mt-auto mb-1">
-                          
-                          {/* Bed */}
-                          <div className="relative flex flex-col items-center group">
-                            {guest && (
-                              <div className="absolute -top-12 left-1/2 -translate-x-1/2 z-10 flex flex-col items-center">
-                                {guest.status === 'ordering' && (
-                                  <div 
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      onSelectGuestOrder(guest);
-                                    }}
-                                    className="animate-bounce-subtle bg-white border-2 border-pink-500 text-slate-900 font-bold px-2 py-1 rounded-2xl flex items-center gap-1 text-[11px] shadow-lg cursor-pointer"
-                                  >
-                                    <span className="text-sm shrink-0">{DISHES[guest.orderDishId || 'burger'].icon}</span>
-                                    <span>ORDER</span>
-                                  </div>
-                                )}
-
-                                {guest.status === 'waiting_delivery' && (
-                                  <div className="animate-pulse bg-gradient-to-r from-yellow-400 to-orange-500 text-slate-900 font-extrabold px-2.5 py-1 rounded-2xl flex items-center gap-1 text-[10px] shadow-lg">
-                                    <span>🛎️ SERVE</span>
-                                  </div>
-                                )}
-
-                                {guest.status === 'eating' && (
-                                  <div className="bg-slate-900 border border-slate-700 font-bold px-2.5 py-1 rounded-full text-[10px] text-slate-300">
-                                    😋 Eating...
-                                  </div>
-                                )}
-
-                                <div className="text-3xl mt-1.5 animate-bounce-subtle">
-                                  {guest.avatarEmoji}
-                                </div>
-                              </div>
-                            )}
-
-                            <div className="w-24 h-12 bg-indigo-950 border-2 border-indigo-900 rounded-xl relative overflow-hidden flex items-end p-1">
-                              <div className="absolute top-0 right-0 w-8 h-full bg-indigo-900/50"></div>
-                              <div className="absolute top-2 left-2 w-14 h-4 bg-purple-900/40 rounded-full"></div>
-                              <span className="text-[10px] font-mono text-indigo-300/40 absolute top-1 left-2 font-bold">LVL {room?.bedLevel}</span>
-                            </div>
-                          </div>
-
-                          {/* Collect Rent */}
-                          <div className="flex flex-col gap-1.5 items-center">
-                            {room?.status === 'dirty' && (
-                              <button
-                                onClick={() => onCleanRoom(302)}
-                                className="flex items-center gap-1.5 px-3 py-1.5 bg-rose-500 hover:bg-rose-400 text-white rounded-xl text-xs font-black shadow-[0_0_10px_rgba(239,68,68,0.4)] cursor-pointer"
-                              >
-                                <Trash2 className="w-3.5 h-3.5" />
-                                CLEAN
-                              </button>
-                            )}
-
-                            {guest && guest.status === 'eating' && (
-                              <button
-                                onClick={() => onCollectRent(guest.id, 302)}
-                                className="flex items-center gap-1 px-3 py-1.5 bg-gradient-to-r from-emerald-500 to-teal-600 hover:scale-105 text-white rounded-xl text-xs font-black shadow-[0_0_15px_rgba(16,185,129,0.3)] animate-pulse-glow cursor-pointer"
-                              >
-                                <DollarSign className="w-3.5 h-3.5" />
-                                CHECKOUT
-                              </button>
-                            )}
-                          </div>
-
-                          {/* TV */}
-                          <div className="flex flex-col items-center">
-                            <div className="w-14 h-9 bg-slate-950 border border border-slate-800 rounded-md relative flex flex-col items-center justify-center overflow-hidden">
-                              <div className="absolute inset-0 bg-cyan-400/5 animate-pulse"></div>
-                              <span className="text-[8px] font-bold text-cyan-400 tracking-wider">HD TV</span>
-                              <span className="text-[7px] font-mono text-slate-600">LVL {room?.tvLevel}</span>
-                            </div>
-                            <div className="w-4 h-2 bg-slate-850 border-r border-l border-slate-700"></div>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })()}
+                  })}
                 </div>
 
                 {/* Elevator Shaft F3 */}

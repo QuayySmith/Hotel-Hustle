@@ -47,6 +47,8 @@ export interface Room {
   bedLevel: number;
   tvLevel: number;
   lampLevel: number;
+  locked?: boolean;
+  unlockCost?: number;
 }
 
 export interface Staff {
