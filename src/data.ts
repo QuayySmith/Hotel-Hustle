@@ -3,244 +3,252 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Dish, Staff, Upgrade, Review } from './types';
+import { Upgrade } from './types';
 
-export const DISHES: Record<string, Dish> = {
-  burger: {
-    id: 'burger',
-    name: 'Deluxe Suite Burger',
-    icon: '🍔',
-    price: 45,
-    ingredients: ['Bun', 'Beef Patty', 'Cheddar Cheese', 'Lettuce', 'Tomato Sauce'],
-    cookTimeSeconds: 6,
-    description: 'Fresh flame-grilled beef with melting sharp cheddar, tucked inside a toasted brioche bun.',
-  },
-  pizza: {
-    id: 'pizza',
-    name: 'Neon Penthouse Pizza',
-    icon: '🍕',
-    price: 60,
-    ingredients: ['Dough', 'Marinara Sauce', 'Mozzarella Cheese', 'Pepperoni Slice'],
-    cookTimeSeconds: 8,
-    description: 'Thin crispy crust layered with classic marinara sauce, loaded with mozzarella and pepperoni slices.',
-  },
-  steak: {
-    id: 'steak',
-    name: 'Gold Plate Prime Steak',
-    icon: '🥩',
-    price: 95,
-    ingredients: ['Ribeye Cut', 'Garlic Butter', 'Rosemary Sprig', 'Asparagus Sides'],
-    cookTimeSeconds: 10,
-    description: 'Thick, marble-grade ribeye steak seared with foaming rosemary-garlic butter.',
-  },
-  pancakes: {
-    id: 'pancakes',
-    name: 'Skyline Pancake Stack',
-    icon: '🥞',
-    price: 35,
-    ingredients: ['Batter Pour', 'Maple Syrup', 'Butter Cube', 'Blueberries'],
-    cookTimeSeconds: 5,
-    description: 'Three fluffy, golden buttermilk pancakes crowned with fresh butter and pure grade-A maple syrup.',
-  },
-  drink: {
-    id: 'drink',
-    name: 'Rooftop Lounge Soda',
-    icon: '🥤',
-    price: 20,
-    ingredients: ['Ice Cubes', 'Soda Mix', 'Lemon Slice', 'Straw'],
-    cookTimeSeconds: 3,
-    description: 'Chilled premium sparkling beverage infused with refreshing natural syrup.',
-  },
+export interface Ingredient {
+  id: string;
+  name: string;
+  icon: string;
+  type: 'bun' | 'patty' | 'topping' | 'sauce';
+}
+
+export const BURGER_INGREDIENTS: Record<string, Ingredient> = {
+  bun_bottom: { id: 'bun_bottom', name: 'Bottom Bun', icon: '🍞', type: 'bun' },
+  bun_top: { id: 'bun_top', name: 'Top Bun', icon: '🥯', type: 'bun' },
+  patty: { id: 'patty', name: 'Juicy Beef Patty', icon: '🥩', type: 'patty' },
+  grilled_chicken: { id: 'grilled_chicken', name: 'Grilled Chicken', icon: '🍗', type: 'patty' },
+  cheese: { id: 'cheese', name: 'Cheddar Cheese', icon: '🧀', type: 'topping' },
+  lettuce: { id: 'lettuce', name: 'Crispy Lettuce', icon: '🥬', type: 'topping' },
+  tomato: { id: 'tomato', name: 'Sliced Tomato', icon: '🍅', type: 'topping' },
+  pickle: { id: 'pickle', name: 'Tangy Pickle', icon: '🥒', type: 'topping' },
+  onion: { id: 'onion', name: 'Fresh Onion', icon: '🧅', type: 'topping' },
+  bacon: { id: 'bacon', name: 'Crispy Bacon', icon: '🥓', type: 'topping' },
+  jalapenos: { id: 'jalapenos', name: 'Jalapeños', icon: '🫑', type: 'topping' },
+  mushrooms: { id: 'mushrooms', name: 'Mushrooms', icon: '🍄', type: 'topping' },
+  sauce_ketchup: { id: 'sauce_ketchup', name: 'Classic Ketchup', icon: '🥫', type: 'sauce' },
+  sauce_mustard: { id: 'sauce_mustard', name: 'Spicy Mustard', icon: '💛', type: 'sauce' },
+  sauce_mayo: { id: 'sauce_mayo', name: 'Creamy Mayo', icon: '🤍', type: 'sauce' },
+  sauce_bbq: { id: 'sauce_bbq', name: 'BBQ Sauce', icon: '🟤', type: 'sauce' },
 };
 
-export const INITIAL_STAFF: Staff[] = [
+export interface CustomerProfile {
+  name: string;
+  emoji: string;
+  color: string;
+  // What they like ordering:
+  ordersBurger: boolean;
+  ordersFries: boolean;
+  ordersPizza: boolean;
+  ordersMilkshake: boolean;
+  ordersDrink: boolean;
+  
+  // Specific burger recipe:
+  burgerRecipe?: string[];
+  burgerDoneness?: 'rare' | 'medium' | 'well';
+  
+  // Pizza toppings:
+  pizzaToppings?: string[];
+  
+  // Milkshake preferences:
+  shakeFlavor?: 'chocolate' | 'strawberry' | 'vanilla';
+  shakeSize?: 'S' | 'M' | 'L';
+  
+  // Drink:
+  drinkFlavor?: 'cola' | 'lime' | 'orange' | 'rootbeer';
+  drinkIce?: boolean;
+
+  isReviewer?: boolean;
+}
+
+export const CUSTOMER_PROFILES: CustomerProfile[] = [
   {
-    id: 'receptionist',
-    role: 'receptionist',
-    name: 'Clara Swift',
-    emoji: '👩‍💼',
-    hired: false,
-    cost: 150,
-    level: 1,
-    perk: 'Automatically checks in arriving lobby guests.',
-    salary: 5,
+    name: "Lord Reginald",
+    emoji: "🎩",
+    color: "from-slate-700 to-slate-900",
+    ordersBurger: true,
+    ordersFries: true,
+    ordersPizza: false,
+    ordersMilkshake: true,
+    ordersDrink: false,
+    burgerRecipe: ["bun_bottom", "patty", "cheese", "bacon", "sauce_mustard", "bun_top"],
+    burgerDoneness: "well",
+    shakeFlavor: "chocolate",
+    shakeSize: "L"
   },
   {
-    id: 'chef',
-    role: 'chef',
-    name: 'Chef Gasto',
-    emoji: '👨‍🍳',
-    hired: false,
-    cost: 300,
-    level: 1,
-    perk: 'Automatically cooks simple items 30% faster.',
-    salary: 10,
+    name: "Sasha Glam",
+    emoji: "💅",
+    color: "from-pink-400 to-rose-600",
+    ordersBurger: true,
+    ordersFries: false,
+    ordersPizza: false,
+    ordersMilkshake: true,
+    ordersDrink: true,
+    burgerRecipe: ["bun_bottom", "lettuce", "patty", "tomato", "pickle", "bun_top"],
+    burgerDoneness: "rare",
+    shakeFlavor: "strawberry",
+    shakeSize: "S",
+    drinkFlavor: "lime",
+    drinkIce: true
   },
   {
-    id: 'housekeeper',
-    role: 'housekeeper',
-    name: 'Dusty Clean',
-    emoji: '🧹',
-    hired: false,
-    cost: 200,
-    level: 1,
-    perk: 'Automatically sweeps and disinfects vacant rooms.',
-    salary: 8,
+    name: "Billy Bouncer",
+    emoji: "🕶️",
+    color: "from-teal-400 to-emerald-600",
+    ordersBurger: true,
+    ordersFries: true,
+    ordersPizza: true,
+    ordersMilkshake: false,
+    ordersDrink: true,
+    burgerRecipe: ["bun_bottom", "patty", "cheese", "patty", "bacon", "sauce_ketchup", "bun_top"],
+    burgerDoneness: "medium",
+    pizzaToppings: ["pepperoni", "mushroom"],
+    drinkFlavor: "cola",
+    drinkIce: false
   },
   {
-    id: 'bellhop',
-    role: 'bellhop',
-    name: 'Jax Porter',
-    emoji: '🤵',
-    hired: false,
-    cost: 250,
-    level: 1,
-    perk: 'Deliveries bypass elevator delay, boosting speeds by 40%.',
-    salary: 7,
+    name: "Gamer Gertrude",
+    emoji: "👩‍💻",
+    color: "from-purple-400 to-indigo-600",
+    ordersBurger: false,
+    ordersFries: true,
+    ordersPizza: true,
+    ordersMilkshake: true,
+    ordersDrink: false,
+    pizzaToppings: ["onion", "pepperoni"],
+    shakeFlavor: "vanilla",
+    shakeSize: "M"
   },
   {
-    id: 'maintenance',
-    role: 'maintenance',
-    name: 'Wrenchy McFix',
-    emoji: '🔧',
-    hired: false,
-    cost: 350,
-    level: 1,
-    perk: 'Reduces elevator breakdown frequency by 75%.',
-    salary: 12,
+    name: "Officer Pete",
+    emoji: "👮",
+    color: "from-cyan-400 to-sky-600",
+    ordersBurger: true,
+    ordersFries: true,
+    ordersPizza: false,
+    ordersMilkshake: false,
+    ordersDrink: true,
+    burgerRecipe: ["bun_bottom", "patty", "cheese", "pickle", "onion", "sauce_ketchup", "bun_top"],
+    burgerDoneness: "well",
+    drinkFlavor: "rootbeer",
+    drinkIce: true
   },
   {
-    id: 'manager',
-    role: 'manager',
-    name: 'Slick Hustler',
-    emoji: '😎',
-    hired: false,
-    cost: 800,
-    level: 1,
-    perk: 'Increases all basic rent & tip gains by 15% across floors.',
-    salary: 25,
+    name: "Chef Pierre",
+    emoji: "👨‍🍳",
+    color: "from-orange-400 to-red-600",
+    ordersBurger: true,
+    ordersFries: false,
+    ordersPizza: true,
+    ordersMilkshake: false,
+    ordersDrink: false,
+    burgerRecipe: ["bun_bottom", "patty", "lettuce", "tomato", "onion", "sauce_mayo", "bun_top"],
+    burgerDoneness: "rare",
+    pizzaToppings: ["mushroom", "onion", "peppers"]
   },
+  {
+    name: "Jojo the Critic",
+    emoji: "🦊",
+    color: "from-amber-500 to-amber-700",
+    ordersBurger: true,
+    ordersFries: true,
+    ordersPizza: true,
+    ordersMilkshake: true,
+    ordersDrink: true,
+    burgerRecipe: ["bun_bottom", "patty", "cheese", "lettuce", "tomato", "pickle", "bacon", "sauce_ketchup", "bun_top"],
+    burgerDoneness: "medium",
+    pizzaToppings: ["pepperoni", "mushroom", "onion", "peppers"],
+    shakeFlavor: "chocolate",
+    shakeSize: "M",
+    drinkFlavor: "cola",
+    drinkIce: true,
+    isReviewer: true
+  },
+  {
+    name: "Mimi Maverick",
+    emoji: "🤠",
+    color: "from-yellow-400 to-amber-600",
+    ordersBurger: true,
+    ordersFries: true,
+    ordersPizza: false,
+    ordersMilkshake: true,
+    ordersDrink: false,
+    burgerRecipe: ["bun_bottom", "patty", "bacon", "cheese", "onion", "bun_top"],
+    burgerDoneness: "well",
+    shakeFlavor: "strawberry",
+    shakeSize: "L"
+  },
+  {
+    name: "Brody Surfer",
+    emoji: "🏄",
+    color: "from-blue-400 to-blue-700",
+    ordersBurger: false,
+    ordersFries: true,
+    ordersPizza: true,
+    ordersMilkshake: false,
+    ordersDrink: true,
+    pizzaToppings: ["pepperoni"],
+    drinkFlavor: "orange",
+    drinkIce: true
+  }
 ];
 
 export const INITIAL_UPGRADES: Upgrade[] = [
   {
-    id: 'beds',
-    name: 'Plush Velvet Beds',
-    description: 'Increases basic checkout room rent payouts by $15 per upgrade tier.',
-    level: 1,
-    maxLevel: 10,
+    id: 'grill_booster',
+    name: 'Infrared Griddle Coil',
+    description: 'Speeds up burger patty cooking by 35%.',
     cost: 100,
-    icon: '🛏️',
-    multiplier: 1.5,
+    purchased: false,
+    icon: '🔥'
   },
   {
-    id: 'tvs',
-    name: 'Ultra HDTV Displays',
-    description: 'Extends guest patience threshold in assigned rooms by 20%.',
-    level: 1,
-    maxLevel: 10,
+    id: 'fryer_super',
+    name: 'Auto-Basket Lifter',
+    description: 'Increases fryer heating speed, preventing fries from getting cold.',
     cost: 120,
-    icon: '📺',
-    multiplier: 1.6,
+    purchased: false,
+    icon: '🍟'
   },
   {
-    id: 'chandelier',
-    name: 'Neon Lobby Chandelier',
-    description: 'Increases customer satisfaction ratings and triggers 10% larger tips.',
-    level: 0,
-    maxLevel: 5,
-    cost: 250,
-    icon: '💡',
-    multiplier: 2.0,
+    id: 'pizza_turbo',
+    name: 'Turbo Brick Jet Oven',
+    description: 'Reduces pizza baking time by half so you never burn a crust!',
+    cost: 150,
+    purchased: false,
+    icon: '🍕'
   },
   {
-    id: 'stove',
-    name: 'Infrared Speed Grills',
-    description: 'Slashes preparation times on the cooking grill and oven by 25%.',
-    level: 1,
-    maxLevel: 8,
+    id: 'blender_extreme',
+    name: 'High-RPM Sonic Blender',
+    description: 'Blends milkshakes instantly at the press of a button.',
+    cost: 130,
+    purchased: false,
+    icon: '🌪️'
+  },
+  {
+    id: 'jukebox',
+    name: 'Foodaria Jukebox',
+    description: 'Relaxes waiting customers, reducing patience loss rate by 40%.',
     cost: 180,
-    icon: '🔥',
-    multiplier: 1.7,
+    purchased: false,
+    icon: '📻'
   },
   {
-    id: 'elevator',
-    name: 'Magnetic Golden Elevator',
-    description: 'Expedites transition speeds between hotel levels and increases reliability.',
-    level: 1,
-    maxLevel: 10,
+    id: 'neon_sign',
+    name: 'Quazzy’s Neon Mascot',
+    description: 'Attracts high-tipping food lovers! Boosts all tip payments by 25%.',
     cost: 200,
-    icon: '🚀',
-    multiplier: 1.8,
-  },
-];
-
-export const LOADING_TIPS = [
-  "💡 TIP: Keep your elevator well-oiled to prevent sudden gridlock breakdowns!",
-  "💡 TIP: Upgrade the Plush Velvet Beds to secure high checkout rents per room.",
-  "💡 TIP: Gold-star cooking scores depend on perfect timing! Flip patties when the timer hits GREEN.",
-  "💡 TIP: Hiring a receptionist handles the lobby desk automatically so you can focus on the kitchen!",
-  "💡 TIP: Satisfied guests leave glowingly stellar reviews on HustleAdvisor, raising your overall Rating!",
-  "💡 TIP: The Rooftop Lounge Soda fills quickly, but overflowing the cup reduces dish perfection.",
-  "💡 TIP: Don't let clean-up drag on! Keep sweeping dirty suites to check in new VIP spenders.",
-];
-
-export const GUEST_NAMES = [
-  "Lord Reginald", "Sasha Glam", "Billy Bouncer", "Madame Fontaine", "DJ Spin",
-  "Chloe Influencer", "Baron Von Rich", "Gamer Gertrude", "Officer Pete", "Chef Pierre",
-  "Penny Pincher", "Calamity Jane", "Dr. Winston", "Mimi Maverick", "Brody Surfer",
-  "Nona Knit", "Arthur Agent", "Clara Jetset", "Sir Reginald", "Countess Vera"
-];
-
-export const GUEST_EMOJIS = [
-  { emoji: "🤠", color: "from-amber-400 to-yellow-600" },
-  { emoji: "👸", color: "from-pink-400 to-rose-600" },
-  { emoji: "🎩", color: "from-slate-700 to-slate-900" },
-  { emoji: "🕶️", color: "from-teal-400 to-emerald-600" },
-  { emoji: "👩", color: "from-purple-400 to-indigo-600" },
-  { emoji: "🧔", color: "from-blue-400 to-blue-700" },
-  { emoji: "👵", color: "from-violet-400 to-fuchsia-600" },
-  { emoji: "👮", color: "from-cyan-400 to-sky-600" },
-  { emoji: "🦊", color: "from-orange-400 to-red-600" },
-  { emoji: "💅", color: "from-fuchsia-300 to-pink-500" },
-];
-
-export const INITIAL_REVIEWS: Review[] = [
-  {
-    id: 'rev1',
-    guestName: 'Lord Reginald',
-    avatarEmoji: '🎩',
-    avatarColor: 'from-slate-700 to-slate-900',
-    rating: 5,
-    comment: 'The suite is absolutely sublime! Serviced instantly, bed felt like clouds. A true five-star stay.',
-    dishServed: 'Gold Plate Prime Steak',
-    timestamp: 'Just now',
-  },
-  {
-    id: 'rev2',
-    guestName: 'Chloe Influencer',
-    avatarEmoji: '💅',
-    avatarColor: 'from-fuchsia-300 to-pink-500',
-    rating: 4,
-    comment: 'Gorgeous glowing neon aesthetic. Totally fits my grid! The pancakes were perfectly fluffy, though the lobby had a short line.',
-    dishServed: 'Skyline Pancake Stack',
-    timestamp: '15m ago',
-  },
-  {
-    id: 'rev3',
-    guestName: 'Dr. Winston',
-    avatarEmoji: '🕶️',
-    avatarColor: 'from-teal-400 to-emerald-600',
-    rating: 2,
-    comment: 'Elevator stalled mid-trip and my burger was slightly overcooked on the edges. The service has potential, but needs staff support.',
-    dishServed: 'Deluxe Suite Burger',
-    timestamp: '2h ago',
+    purchased: false,
+    icon: '💡'
   }
 ];
 
-export const CARS = [
-  { id: 'c1', color: 'bg-red-500', speed: 8, icon: '🚗', top: 'top-1/4' },
-  { id: 'c2', color: 'bg-yellow-400', speed: 12, icon: '🚕', top: 'top-1/3' },
-  { id: 'c3', color: 'bg-blue-500', speed: 6, icon: '🚙', top: 'top-1/2' },
-  { id: 'c4', color: 'bg-green-400', speed: 10, icon: '🏎️', top: 'top-2/3' },
+export const LOADING_TIPS = [
+  "💡 TIP: In the Fryer Station, drop raw potato wedges and lift them once the progress reaches golden green zone!",
+  "💡 TIP: Keep your eyes on multiple stations! Active cooking timers will continue while you are building a pizza.",
+  "💡 TIP: Pizza dough must be stretched to 100% before adding marinara sauce and toppings.",
+  "💡 TIP: Doneness is everything! Jojo the Critic hates overcooked or undercooked beef patties.",
+  "💡 TIP: When pouring fizzy sodas, release the pour button before the liquid level overflows the rim!",
+  "💡 TIP: Once every ordered item is complete, pack them in the Bag at the Packaging Station to serve."
 ];

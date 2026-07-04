@@ -1,6 +1,6 @@
 {
-  "name": "Suite Hustle",
-  "description": "A premium 2D hotel management and cooking mobile game interface with realistic simulation gameplay.",
+  "name": "Quazzy's Foodaria",
+  "description": "The world-famous fast food cooking game of Quazzy's Foodaria, featuring 9 interactive stations from grill to packaging and serve!",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }
