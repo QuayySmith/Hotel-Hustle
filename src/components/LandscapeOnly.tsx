@@ -8,6 +8,7 @@ import { RotateCw, Smartphone } from 'lucide-react';
 
 export default function LandscapeOnly({ children }: { children: React.ReactNode }) {
   const [isPortrait, setIsPortrait] = useState(false);
+  const [bypassed, setBypassed] = useState(false);
 
   useEffect(() => {
     const checkOrientation = () => {
@@ -26,7 +27,7 @@ export default function LandscapeOnly({ children }: { children: React.ReactNode 
     };
   }, []);
 
-  if (!isPortrait) {
+  if (!isPortrait || bypassed) {
     return <>{children}</>;
   }
 
@@ -37,7 +38,7 @@ export default function LandscapeOnly({ children }: { children: React.ReactNode 
       <div className="absolute bottom-1/4 right-1/4 w-72 h-72 rounded-full bg-fuchsia-500/10 blur-3xl animate-pulse"></div>
 
       {/* Warning Box */}
-      <div className="relative z-10 max-w-sm bg-slate-900/80 border-2 border-fuchsia-500/50 rounded-3xl p-8 shadow-2xl backdrop-blur-md animate-bounce-subtle">
+      <div className="relative z-10 max-w-sm bg-slate-900/80 border-2 border-fuchsia-500/50 rounded-3xl p-8 shadow-2xl backdrop-blur-md animate-bounce-subtle flex flex-col items-center">
         {/* Glow Bar */}
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-1 bg-fuchsia-500 rounded-full shadow-[0_0_15px_#d946ef]"></div>
 
@@ -47,16 +48,25 @@ export default function LandscapeOnly({ children }: { children: React.ReactNode 
         </div>
 
         <h1 className="font-sans text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-fuchsia-400 to-pink-500 tracking-tight mb-3">
-          ROTATION REQUIRED
+          ROTATION SUGGESTED
         </h1>
         
-        <p className="font-sans text-sm text-slate-400 leading-relaxed mb-6">
+        <p className="font-sans text-xs text-slate-400 leading-relaxed mb-6">
           Rotate your device to <span className="text-cyan-400 font-bold">Landscape mode</span> to play <span className="text-white font-bold">Suite Hustle</span> in all its premium 2D neon glory.
         </p>
 
-        <div className="inline-flex items-center gap-2 px-4 py-2 bg-slate-950 border border-slate-800 rounded-xl">
-          <span className="w-2.5 h-2.5 bg-emerald-500 rounded-full animate-ping"></span>
-          <span className="font-mono text-xs text-slate-300 font-medium">OPTIMIZED FOR LANDSCAPE</span>
+        <div className="flex flex-col gap-3.5 w-full">
+          <button
+            onClick={() => setBypassed(true)}
+            className="w-full py-3 bg-gradient-to-r from-cyan-500 to-fuchsia-600 hover:scale-105 active:scale-95 text-white font-sans text-xs font-black tracking-widest rounded-2xl shadow-lg transition-all cursor-pointer"
+          >
+            PLAY IN PORTRAIT ANYWAY
+          </button>
+
+          <div className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-slate-950 border border-slate-800 rounded-xl">
+            <span className="w-2.5 h-2.5 bg-emerald-500 rounded-full animate-ping"></span>
+            <span className="font-mono text-[10px] text-slate-300 font-medium">OPTIMIZED FOR LANDSCAPE</span>
+          </div>
         </div>
       </div>
     </div>
